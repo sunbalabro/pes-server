@@ -8,8 +8,7 @@ const myPlaintextPassword = 'nadir';
 const saltRounds = 10;
 const mysql = require('mysql')
 
-const {v4 : userId} = require('uuid')
-const {v4 : locationId} = require('uuid')
+const { v4: genrateId } = require('uuid')
 
 app.use(bodyParser.json())
 app.use(cors())
@@ -27,38 +26,38 @@ const connection = mysql.createConnection({
     database: 'testing_server'
 });
 
-connection.connect((err)=>{
-   if(err){
-       console.log("err " + err)
-   }
+connection.connect((err) => {
+    if (err) {
+        console.log("err " + err)
+    }
 });
 
 
 // const usersDetail = connection.query('SELECT * FROM `user` WHERE 1',(error,result,fields)=>{
 //     if (error) throw error
 //     console.log("result : " + JSON.stringify(result))
-    
+
 // })
 
 
 //// create user ////
 
 app.post('/createuser', (req, res) => {
-    const useruniqueid = userId()
-    try {   
-        const { email, password, fullName, type , loggedIn} = req.body
-        bcrypt.genSalt(saltRounds,(err,salt)=>{
-            bcrypt.hash(password,salt,(err,hash)=>{
-                const userdata = { email, password: hash, fullName, type , useruniqueid,loggedIn}
-                const values = [[ email , hash , fullName , type ,useruniqueid,loggedIn]]
+    const useruniqueid = genrateId()
+    try {
+        const { email, password, fullName, type, loggedIn } = req.body
+        bcrypt.genSalt(saltRounds, (err, salt) => {
+            bcrypt.hash(password, salt, (err, hash) => {
+                const userdata = { email, password: hash, fullName, type, useruniqueid, loggedIn }
+                const values = [[email, hash, fullName, type, useruniqueid, loggedIn]]
                 const query = `INSERT INTO user (email , password , fullName , type , userId , loggedIn) VALUES ?`
-                connection.query(query,[values],(err,result)=>{
+                connection.query(query, [values], (err, result) => {
                     if (err) res.json({ success: false, message: "something went wrong in creating user" })
                     return res.json({ success: true, message: "successfully createed user ", userdata })
                 })
             })
         })
-    } catch(err) {
+    } catch (err) {
         if (err) {
             res.json({ success: false, message: "something went wrong in creating user" })
             console.log(err)
@@ -70,16 +69,16 @@ app.post('/createuser', (req, res) => {
 
 app.post('/edituser', (req, res) => {
     try {
-        const { fullName , userId} = req.body
+        const { fullName, userId } = req.body
         const newName = fullName
-        const user = userId 
+        const user = userId
         const query = `UPDATE user set fullName = ? WHERE userId = ?`
-        connection.query(query,[newName,user],(err,results)=>{
-            if(err) res.json({ success: false, message: "something went wrong in adding user" }) 
-          return res.json({ success: true, message: "successfully edit user " })
+        connection.query(query, [newName, user], (err, results) => {
+            if (err) res.json({ success: false, message: "something went wrong in adding user" })
+            return res.json({ success: true, message: "successfully edit user " })
         })
     }
-    catch(err) {
+    catch (err) {
         if (err) {
             res.json({ success: false, message: "something went wrong in adding user" })
             console.log(err)
@@ -89,19 +88,19 @@ app.post('/edituser', (req, res) => {
 
 ///// delete user ////
 
-app.post('/deleteuser',(req,res)=>{
-    try{
-        const {userId} = req.body
-        
+app.post('/deleteuser', (req, res) => {
+    try {
+        const { userId } = req.body
+
         const deleteUser = userId
         const query = `DELETE FROM user WHERE userId = ?`
-        connection.query(query,deleteUser,(err,results)=>{
-            if(err) res.json({success: false, message:"something went wrong in deleting user"}) 
-           return res.json({success: true , message:"successfully deleted user" , deleteUser})
+        connection.query(query, deleteUser, (err, results) => {
+            if (err) res.json({ success: false, message: "something went wrong in deleting user" })
+            return res.json({ success: true, message: "successfully deleted user", deleteUser })
         })
-    }catch(err){
-        if(err){
-            res.json({success: false, message:"something went wrong in deleting user"})
+    } catch (err) {
+        if (err) {
+            res.json({ success: false, message: "something went wrong in deleting user" })
             console.log(err)
         }
     }
@@ -109,32 +108,39 @@ app.post('/deleteuser',(req,res)=>{
 
 ///// get all users /////
 
-app.get('/getallusers',(req,res)=>{
-    try{
-        connection.query('SELECT * FROM `user` WHERE 1',(error,result,fields)=>{
-                if (error) throw error
-                const users = result
-                res.json({success: true , message: "successfully get all users" , users})
-            })
-    }catch(err){
-       if(err){
-           res.json({success: false , message: "somenthing went wrong in getting all users"})
-       }
+app.get('/getallusers', (req, res) => {
+    try {
+        connection.query('SELECT * FROM `user` WHERE 1', (error, result, fields) => {
+            if (error) throw error
+            const users = result
+            res.json({ success: true, message: "successfully get all users", users })
+        })
+    } catch (err) {
+        if (err) {
+            res.json({ success: false, message: "somenthing went wrong in getting all users" })
+        }
     }
 })
 
 ////// add location ///////
 
-app.post('/addlocation',(req,res)=>{
-    const uniquelocationid = locationId()
-    try{
-         const {geoPoint,message,userId,userName} = req.body
-         const locationData = {geoPoint,message,userId,userName,uniquelocationid}
-         res.json({success: true , message: "successfully added location",locationData})
+app.post('/addlocation', (req, res) => {
+    try {
+        const uniquelocationid = genrateId()
+        const { date, geoPoint, message, userId, userName } = req.body
+        const locationData = [[date, JSON.stringify(geoPoint), message, userId, userName, uniquelocationid]]
+        const query = `INSERT INTO locations (date , geoPoint , message , userId , userName , uniquelocationid) VALUES ?`
+        connection.query(query, [locationData], (err, result) => {
+            if (err) {
+                console.log(err)
+                return res.json({ success: false, message: "something went wrong in adding location" })
+            }
+            return res.json({ success: true, message: "successfully added location", locationData })
+        })
     }
-    catch(err){
-        if(err){
-            res.json({success: false, message: "something went in location"})
+    catch (err) {
+        if (err) {
+            res.json({ success: false, message: "something went in location" })
             console.log(err)
         }
     }
@@ -142,15 +148,15 @@ app.post('/addlocation',(req,res)=>{
 
 /////// get location ///////
 
-app.get('/getlocation',(req,res)=>{
-    try{
-        const {userId} = req.body
-        const userlocationdata = {userId}
-        res.json({success: true , message: "successfully get location",userlocationdata})
+app.get('/getlocation', (req, res) => {
+    try {
+        const { userId } = req.body
+        const userlocationdata = { userId }
+        res.json({ success: true, message: "successfully get location", userlocationdata })
     }
-    catch(err){
-        if(err){
-            res.json({success: false ,message:'something went wrong in getting location'})
+    catch (err) {
+        if (err) {
+            res.json({ success: false, message: 'something went wrong in getting location' })
             console.log(err)
         }
     }
@@ -158,12 +164,12 @@ app.get('/getlocation',(req,res)=>{
 
 //////// get all location //////////
 
-app.get('/getalllocation',(req,res)=>{
-    try{
-        res.json({success: true , message: "successfully get other location"})
-    }catch(err){
-        if(err){
-            res.json({success: false , message: "something went wrong  in getting other location"})
+app.get('/getalllocation', (req, res) => {
+    try {
+        res.json({ success: true, message: "successfully get other location" })
+    } catch (err) {
+        if (err) {
+            res.json({ success: false, message: "something went wrong  in getting other location" })
             console.log(err)
         }
     }
@@ -171,16 +177,16 @@ app.get('/getalllocation',(req,res)=>{
 
 /////// get monthly report ///////
 
-app.post('/getmonthlyreport',(req,res)=>{
-    try{
+app.post('/getmonthlyreport', (req, res) => {
+    try {
         const monthlyReport = []
         const weeklyReport = []
         const dailyReport = []
-        const data = {monthlyReport,weeklyReport,dailyReport}
-        res.json({success: true , message: "successfully get monthly report",data}) 
-    }catch(err){
-        if(err){
-            res.json({success: false , message: "something went wrong in getting monthly report"})
+        const data = { monthlyReport, weeklyReport, dailyReport }
+        res.json({ success: true, message: "successfully get monthly report", data })
+    } catch (err) {
+        if (err) {
+            res.json({ success: false, message: "something went wrong in getting monthly report" })
             console.log(err)
         }
     }
@@ -188,13 +194,13 @@ app.post('/getmonthlyreport',(req,res)=>{
 
 
 ///// logout user //////
-app.post('/logout',(req,res)=>{
-    try{
-        const {userId} = req.body
-        res.json({success: true,message:"succefully logout user" ,userId})
-    }catch(err){
-        if(err){
-            res.json({success: false , message: "something went wrong in logout user"})
+app.post('/logout', (req, res) => {
+    try {
+        const { userId } = req.body
+        res.json({ success: true, message: "succefully logout user", userId })
+    } catch (err) {
+        if (err) {
+            res.json({ success: false, message: "something went wrong in logout user" })
             console.log(err)
         }
     }
