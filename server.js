@@ -32,14 +32,6 @@ connection.connect((err) => {
     }
 });
 
-
-// const usersDetail = connection.query('SELECT * FROM `user` WHERE 1',(error,result,fields)=>{
-//     if (error) throw error
-//     console.log("result : " + JSON.stringify(result))
-
-// })
-
-
 //// create user ////
 
 app.post('/createuser', (req, res) => {
@@ -152,7 +144,11 @@ app.get('/getlocation', (req, res) => {
     try {
         const { userId } = req.body
         const userlocationdata = { userId }
-        res.json({ success: true, message: "successfully get location", userlocationdata })
+        const query = 'SELECT * FROM `locations` WHERE userId = ?'
+        connection.query(query, userId, (err, results, fields) => {
+            if (err) res.json({ success: false, message: "smething went wrong in getting location" })
+            return res.json({ success: true, message: "successfully get location", data: results })
+        })
     }
     catch (err) {
         if (err) {
@@ -164,9 +160,12 @@ app.get('/getlocation', (req, res) => {
 
 //////// get all location //////////
 
-app.get('/getalllocation', (req, res) => {
+app.get('/getalllocations', (req, res) => {
     try {
-        res.json({ success: true, message: "successfully get other location" })
+        connection.query('SELECT * FROM `locations` WHERE 1', (err, results, fields) => {
+            if (err) res.json({ success: false, message: "something went during get all location" })
+            return res.json({ success: true, message: "successfully get all location", data: results })
+        })
     } catch (err) {
         if (err) {
             res.json({ success: false, message: "something went wrong  in getting other location" })
@@ -192,12 +191,30 @@ app.post('/getmonthlyreport', (req, res) => {
     }
 })
 
+///// login user ///////
+
+app.post('/login',(req,res)=>{
+    try{
+        const {userId} = req.body
+
+    }catch(err){
+                if(err){
+                    res.json({success: false , message: "somenthing went wrong in login user"})
+                    console.log(err)
+                }
+    }
+})
 
 ///// logout user //////
 app.post('/logout', (req, res) => {
     try {
         const { userId } = req.body
-        res.json({ success: true, message: "succefully logout user", userId })
+        const log = 0
+        const query = 'UPDATE `user` set loggedIn = ?  WHERE  userId = ?'
+        connection.query(query, [log, userId], (err, result, fields) => {
+            if (err) res.json({ success: false, message: "something went wrong in loging out user" })
+            return res.json({ success: true, message: "successfully logout user" })
+        })
     } catch (err) {
         if (err) {
             res.json({ success: false, message: "something went wrong in logout user" })
